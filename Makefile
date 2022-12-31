@@ -1,2 +1,8 @@
-server:
-	go build ./src -o ./bin/server && ./bin/server
+dev:
+	go run main.go
+
+dev_compile:
+	go build -o ./bin/server && ./bin/server
+
+deploy:
+	./bin/server
