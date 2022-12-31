@@ -15,8 +15,14 @@ type HTTPServer struct {
 }
 
 func (h *HTTPServer) RunHTTPServer(core *Core) {
+	handler := Router{
+		core: core,
+	}
+	
+	handler.New()
+
 	h.service = &fasthttp.Server{
-		Handler: requestHandler,
+		Handler: handler.router.HandleRequest,
 		ReadTimeout: time.Second * 10,
 		WriteTimeout: time.Second * 10,
 		LogAllErrors: true,

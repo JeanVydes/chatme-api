@@ -11,6 +11,7 @@ type Core struct {
 	production bool
 	logger *log.Logger
 	db *Database
+	redis *Redis
 	server *HTTPServer
 }
 
@@ -20,6 +21,9 @@ func (c *Core) Run() {
 
 	db := Database{}
 	db.Connect(c)
+
+	redis := Redis{}
+	redis.Init(c)
 
 	httpServer := HTTPServer{
 		addr: "0.0.0.0",
