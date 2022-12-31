@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -8,17 +9,24 @@ import (
 
 type Core struct {
 	production bool
+	logger *log.Logger
+	db *Database
+	server *HTTPServer
 }
 
 func (c *Core) Run() {
 	c.LoadEnviromentVariables()
+	c.logger = log.New(os.Stdout, "[CHATME-API] ", 0)
+
+	db := Database{}
+	db.Connect(c)
 
 	httpServer := HTTPServer{
 		addr: "0.0.0.0",
 		port: os.Getenv("PORT"),
 	}
 
-	httpServer.RunHTTPServer()
+	httpServer.RunHTTPServer(c)
 }
 
 func (c *Core) LoadEnviromentVariables() {

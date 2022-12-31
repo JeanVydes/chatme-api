@@ -14,7 +14,7 @@ type HTTPServer struct {
 	port string
 }
 
-func (h *HTTPServer) RunHTTPServer() {
+func (h *HTTPServer) RunHTTPServer(core *Core) {
 	h.service = &fasthttp.Server{
 		Handler: requestHandler,
 		ReadTimeout: time.Second * 10,
@@ -23,5 +23,6 @@ func (h *HTTPServer) RunHTTPServer() {
 		Logger: log.New(nil, "[CHATME-API]", 0),
 	}
 
+	core.server = h
 	h.service.ListenAndServe(fmt.Sprintf("%s:%s", h.addr, h.port))
 }
