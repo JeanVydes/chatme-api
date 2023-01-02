@@ -18,7 +18,7 @@ func (r *UsersRouter) SetRoutes() {
 }
 
 func (r *UsersRouter) SetEndpoints() {
-	r.router.Get("", AuthMiddleware(r.GetUser)) // Get user
+	r.router.Get("", r.GetUser) // Get user
 	r.router.Post("", r.CreateUser) // Create new user record in SQL database
 }
 
