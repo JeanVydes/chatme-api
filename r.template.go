@@ -5,7 +5,7 @@ import (
 )
 
 type ITemplateRouter struct {
-	core *Core
+	//core *Core
 	router *routing.RouteGroup
 } 
 

@@ -1,7 +1,12 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"github.com/qiangxue/fasthttp-routing"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthRouter struct {
@@ -14,17 +19,89 @@ func (r *AuthRouter) SetRoutes() {
 }
 
 func (r *AuthRouter) SetEndpoints() {
-	r.router.Get("/session", r.GetSession) // Get session information
-	r.router.Post("/session", nil) // Create new session
+	r.router.Get("/session", AuthMiddleware(r.GetSession)) // Get session information
+	r.router.Post("/session", r.CreateSession) // Create new session
 	r.router.Delete("/session", nil) // Delete session
 }
 
 func (r *AuthRouter) GetSession(c *routing.Context) error {
-	c.Write([]byte("<session>"))
+	session := c.Get("session")
+	if session == nil {
+		Generic(c, 401, Unauthorized, nil, true)
+		return nil
+	}
 
+	if session.(ISession).ID < 1 {
+		Generic(c, 401, Unauthorized, nil, true)
+		return nil
+	}
+
+	Generic(c, 200, Authorized, session, true)
 	return nil
 }
 
 func (r *AuthRouter) CreateSession(c *routing.Context) error {
+	var data CreateSessionRequest
+	err := json.Unmarshal(c.Request.Body(), &data)
+	if err != nil {
+		Generic(c, 400, BodyError, nil, true)
+		return nil
+	}
+
+	if data.Email == "" || data.Password == "" {
+		Generic(c, 400, JSONEmptyValuesError, nil, true)
+		return nil
+	}
+
+	if len(data.Password) < 6 || len(data.Password) > 128 {
+		Generic(c, 400, PasswordLengthError, nil, true)
+		return nil
+	}
+
+	rows, err := r.core.db.conn.Query(fmt.Sprintf("SELECT * FROM users WHERE email = '%s' LIMIT 1", data.Email))
+	if err != nil {
+		Generic(c, 500, SQLQueryError, nil, true)
+		return nil
+	}
+
+	var user IUser
+	for rows.Next() {
+		err = rows.Scan(&user.ID, &user.Email, &user.Password, &user.Gender, &user.CreatedAt, &user.Username)
+		if err != nil {
+			Generic(c, 500, SQLQueryError, nil, true)
+			return nil
+		}
+	}
+
+	if user.ID < 1 {
+		Generic(c, 404, UserNotFoundError, nil, true)
+		return nil
+	}
+
+	err = bcrypt.CompareHashAndPassword(user.Password, []byte(data.Password))
+	if err != nil {
+		Generic(c, 400, InvalidPasswordError, nil, true)
+		return nil
+	}
+
+	// Access Token
+
+	session := ISession{
+		ID: user.ID,
+		CreatedAt: time.Now().Unix(),
+		ExpirationDate: time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	sessionString := ParseSession(session)
+	aToken, err := Encrypt(hash_key, sessionString)
+	if err != nil {
+		Generic(c, 500, SessionError, nil, true)
+		return nil
+	}
+
+	Generic(c, 200, Created, Map{
+		"access_token": aToken,
+	}, true)
+
 	return nil
 }

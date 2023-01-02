@@ -3,9 +3,13 @@ package main
 import (
 	"log"
 	"os"
+	"fmt"
+	"runtime"
 
 	"github.com/joho/godotenv"
 )
+
+var hash_key string
 
 type Core struct {
 	production bool
@@ -13,6 +17,7 @@ type Core struct {
 	db *Database
 	redis *Redis
 	server *HTTPServer
+	hash_key *string
 }
 
 func (c *Core) Run() {
@@ -43,4 +48,12 @@ func (c *Core) LoadEnviromentVariables() {
 	if err != nil {
 		panic(err)
 	}
+
+	hash_key, err = RandomToken(fmt.Sprintf("%d:%d:%s", os.Getpid(), runtime.NumCPU(), runtime.GOROOT()))
+	if err != nil {
+		panic(err)
+	}
+
+	os.Setenv("HASH_KEY", hash_key)
+	c.hash_key = &hash_key
 }

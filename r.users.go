@@ -18,7 +18,7 @@ func (r *UsersRouter) SetRoutes() {
 }
 
 func (r *UsersRouter) SetEndpoints() {
-	r.router.Get("", r.GetUser) // Get user
+	r.router.Get("", AuthMiddleware(r.GetUser)) // Get user
 	r.router.Post("", r.CreateUser) // Create new user record in SQL database
 }
 
@@ -33,7 +33,7 @@ func (r *UsersRouter) CreateUser(c *routing.Context) error {
 	err := json.Unmarshal(c.Request.Body(), &data)
 	if err != nil {
 		Generic(c, 400, BodyError, nil, true)
-		return err
+		return nil
 	}
 
 	if data.Username == "" || data.Email == "" || data.Password == "" || data.Gender == "" {
