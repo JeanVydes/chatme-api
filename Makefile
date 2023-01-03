@@ -1,8 +1,4 @@
-dev:
-	go run main.go
+all: compile
 
-dev_compile:
-	go build -o ./bin/server && ./bin/server
-
-deploy:
-	./bin/server
+compile:
+	go build -o ./bin/server

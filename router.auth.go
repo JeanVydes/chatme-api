@@ -19,24 +19,19 @@ func (r *AuthRouter) SetRoutes() {
 }
 
 func (r *AuthRouter) SetEndpoints() {
-	r.router.Get("/session", AuthMiddleware(r.GetSession)) // Get session information
-	r.router.Post("/session", r.CreateSession) // Create new session
-	r.router.Delete("/session", nil) // Delete session
+	r.router.Get("/session", AuthMiddleware(r.GetSession, true))
+	r.router.Post("/session", r.CreateSession)
 }
 
 func (r *AuthRouter) GetSession(c *routing.Context) error {
-	session := c.Get("session")
-	if session == nil {
-		Generic(c, 401, Unauthorized, nil, true)
+	result, err := r.ProcessGetSession(c)
+	if err != nil {
+		Generic(c, 500, err.Error(), nil, true)
 		return nil
 	}
 
-	if session.(ISession).ID < 1 {
-		Generic(c, 401, Unauthorized, nil, true)
-		return nil
-	}
+	Generic(c, 200, "OK", result, true)
 
-	Generic(c, 200, Authorized, session, true)
 	return nil
 }
 

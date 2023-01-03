@@ -9,38 +9,40 @@ import (
 	"github.com/qiangxue/fasthttp-routing"
 )
 
-func ManageAuthorization(c *routing.Context) error {
+func ManageAuthorization(c *routing.Context) (bool) {
 	authorization := string(c.Request.Header.Peek("Authorization"))
 	if len(authorization) == 0 {
-		Generic(c, 401, Unauthorized, nil, true)
-		return nil
+		return false
 	}
 
 	session, err := Decrypt(hash_key, string(authorization))
 	if err != nil {
-		Generic(c, 401, Unauthorized, nil, true)
-		return nil
+		return false
 	}
 
 	unparsedSession, err := UnParseSession(session)
 	if err != nil {
-		Generic(c, 401, Unauthorized, nil, true)
-		return nil
+		return false
 	}
 
 	if unparsedSession.ExpirationDate < time.Now().Unix() {
-		Generic(c, 401, Unauthorized, nil, true)
-		return nil
+		return false
 	}
 
 	c.Set("session", unparsedSession)
+	c.Set("user-id", unparsedSession.ID)
 
-	return nil
+	return true
 }
 
-func AuthMiddleware(next routing.Handler) routing.Handler {
+func AuthMiddleware(next routing.Handler, required bool) routing.Handler {
 	return func(c *routing.Context) error {
-		ManageAuthorization(c)
+		authorized := ManageAuthorization(c)
+		if !authorized && required {
+			Generic(c, 401, Unauthorized, nil, true)
+			return nil
+		}
+
 		next(c)
 
 		return nil

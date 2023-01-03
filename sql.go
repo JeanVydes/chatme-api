@@ -1,9 +1,9 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"os"
+	"fmt"
+	"database/sql"
 
 	_ "github.com/lib/pq" // Postgres driver
 )
