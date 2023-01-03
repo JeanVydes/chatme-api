@@ -11,4 +11,4 @@ also first time i use SQL and fasthttp
 
 the api is full functional to register/login and get user data
 
-for testing, debug, optimization i use ChatGPT
+for ideas, testing, debug, optimization i use ChatGPT
